@@ -56,7 +56,7 @@ typedef enum {
     MSScanner *_scanner;
     BOOL _snap;
     MSScanState _state;
-    MSCaptureSession *_captureSession;
+
 #if __has_feature(objc_arc_weak)
     id<MSScannerSessionDelegate> __weak _delegate;
 #elif __has_feature(objc_arc)
@@ -65,6 +65,8 @@ typedef enum {
     id<MSScannerSessionDelegate> _delegate;
 #endif
 }
+
+@property (nonatomic, strong) MSCaptureSession *captureSession;
 
 /** The scan options as a bitwise-or of scanning types (see `MSResult`).
  */
@@ -134,6 +136,7 @@ typedef enum {
  * @return the scanner session instance.
  */
 - (id)initWithScanner:(MSScanner *)scanner;
+- (id)initWithScanner:(MSScanner *)scanner device:(AVCaptureDevicePosition)device;
 
 ///---------------------------------------------------------------------------------------
 /// @name Video Capture Methods

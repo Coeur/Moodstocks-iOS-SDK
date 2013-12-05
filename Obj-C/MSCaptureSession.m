@@ -65,9 +65,30 @@ static void ms_capturesession_cleanup(void *s) {
                                                      name:UIDeviceOrientationDidChangeNotification
                                                    object:nil];
         
-        self.orientation = [[UIDevice currentDevice] orientation];
+        self.orientation = [UIDevice currentDevice].orientation;
         self.delegate = nil;
 
+#endif
+    }
+    return self;
+}
+
+- (id)initWithDevice:(AVCaptureDevicePosition)devicePosition
+{
+    self = [super init];
+    if (self) {
+#if MS_IPHONE_OS_REQUIREMENTS
+        [self setupWithDevice:devicePosition];
+        
+        [[UIDevice currentDevice] beginGeneratingDeviceOrientationNotifications];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(deviceOrientationDidChange)
+                                                     name:UIDeviceOrientationDidChangeNotification
+                                                   object:nil];
+        
+        self.orientation = [UIDevice currentDevice].orientation;
+        self.delegate = nil;
+        
 #endif
     }
     return self;
@@ -97,6 +118,15 @@ static void ms_capturesession_cleanup(void *s) {
     [self setupVideoPreview];
 }
 
+- (void)setupWithDevice:(AVCaptureDevicePosition)devicePosition
+{
+    _captureSession = [[AVCaptureSession alloc] init];
+    
+    [self setupVideoInputWithDevice:devicePosition];
+    [self setupVideoOutput];
+    [self setupVideoPreview];
+}
+
 - (void)setupVideoInput {
     _videoInput = [[AVCaptureDeviceInput alloc] initWithDevice:[self backFacingCamera]
                                                          error:nil];
@@ -105,6 +135,37 @@ static void ms_capturesession_cleanup(void *s) {
     if ([_captureSession canSetSessionPreset:AVCaptureSessionPreset1280x720])
         [_captureSession setSessionPreset:AVCaptureSessionPreset1280x720];
 
+    if ([_captureSession canAddInput:_videoInput]) {
+        [_captureSession addInput:_videoInput];
+    }
+    else {
+        // Fallback to 480x360 (e.g. on 3GS devices)
+        if ([_captureSession canSetSessionPreset:AVCaptureSessionPresetMedium])
+            [_captureSession setSessionPreset:AVCaptureSessionPresetMedium];
+        if ([_captureSession canAddInput:_videoInput]) {
+            [_captureSession addInput:_videoInput];
+        }
+    }
+}
+
+- (void)setupVideoInputWithDevice:(AVCaptureDevicePosition)devicePosition {
+    switch (devicePosition) {
+        case AVCaptureDevicePositionUnspecified:
+        case AVCaptureDevicePositionBack:
+            _videoInput = [[AVCaptureDeviceInput alloc] initWithDevice:[self backFacingCamera]
+                                                                 error:nil];
+            break;
+            
+        case AVCaptureDevicePositionFront:
+            _videoInput = [[AVCaptureDeviceInput alloc] initWithDevice:[self frontFacingCamera]
+                                                                 error:nil];
+            break;
+    }
+    
+    // Recommended setting: do  *NOT* change
+    if ([_captureSession canSetSessionPreset:AVCaptureSessionPreset1280x720])
+        [_captureSession setSessionPreset:AVCaptureSessionPreset1280x720];
+    
     if ([_captureSession canAddInput:_videoInput]) {
         [_captureSession addInput:_videoInput];
     }
@@ -177,6 +238,10 @@ static void ms_capturesession_cleanup(void *s) {
 
 - (AVCaptureDevice *)backFacingCamera {
     return [self cameraWithPosition:AVCaptureDevicePositionBack];
+}
+
+- (AVCaptureDevice *)frontFacingCamera {
+    return [self cameraWithPosition:AVCaptureDevicePositionFront];
 }
 
 - (void)captureOutput:(AVCaptureOutput *)captureOutput

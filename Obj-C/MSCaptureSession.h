@@ -40,7 +40,6 @@
 #endif
 {
 #if MS_IPHONE_OS_REQUIREMENTS
-    AVCaptureSession *_captureSession;
     AVCaptureVideoPreviewLayer *_previewLayer;
     AVCaptureVideoOrientation _orientation;
     AVCaptureDeviceInput *_videoInput;
@@ -55,7 +54,11 @@
 #endif
 }
 
+- (id)initWithDevice:(AVCaptureDevicePosition)devicePosition;
+
 #if MS_IPHONE_OS_REQUIREMENTS
+@property (nonatomic, strong) AVCaptureSession *captureSession;
+
 /** The layer used to preview the video capture on-screen.
  */
 @property (nonatomic, readonly) AVCaptureVideoPreviewLayer *previewLayer;

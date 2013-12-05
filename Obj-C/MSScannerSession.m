@@ -37,6 +37,10 @@
 @synthesize state = _state;
 
 - (id)initWithScanner:(MSScanner *)scanner {
+    return [self initWithScanner:scanner device:AVCaptureDevicePositionBack];
+}
+
+- (id)initWithScanner:(MSScanner *)scanner device:(AVCaptureDevicePosition)device {
     self = [super init];
     if (self) {
         _scanOptions = MS_RESULT_TYPE_IMAGE;
@@ -46,7 +50,7 @@
         _snap = NO;
         _state = MS_SCAN_STATE_DEFAULT;
         _scanner = scanner;
-        _captureSession = [[MSCaptureSession alloc] init];
+        _captureSession = [[MSCaptureSession alloc] initWithDevice:device];
         _delegate = nil;
     }
     return self;
